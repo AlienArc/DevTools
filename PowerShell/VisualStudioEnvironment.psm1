@@ -5,7 +5,9 @@ function Set-VisualStudioEnvironment
         [int] 
         $Version 
 	)
-	
+    
+    if ($Version -eq 0) { $Version = 2019 }
+
 	if ($Version -eq 2008) { VS-SetEnv2008 }
 	if ($Version -eq 2010) { VS-SetEnv2010 }
 	if ($Version -eq 2012) { VS-SetEnv2012 }
