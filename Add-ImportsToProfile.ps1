@@ -1,4 +1,4 @@
-$scriptFolder = (Split-Path -parent $PSCommandPath)
+$scriptFolder = (Join-Path (Split-Path -parent $PSCommandPath) "PowerShell")
 
 $allpsm1 = Get-ChildItem -Path $scriptFolder -File *.psm1
 
