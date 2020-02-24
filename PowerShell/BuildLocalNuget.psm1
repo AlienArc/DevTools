@@ -15,7 +15,7 @@ function Get-ScriptDirectory {
 }
 
 function Get-CounterFile {
-    Join-Path $env:home ".nugetcounter"
+    Join-Path $env:userprofile ".nugetcounter"
 }
 
 function Get-NextBuild {

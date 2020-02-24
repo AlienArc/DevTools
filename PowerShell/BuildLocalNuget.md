@@ -35,7 +35,7 @@ From a powershell command prompt (requires VS dev tool environment to be setup, 
 ## Publish-LocalNuget [-Path] <directory containing a sln file> [-Version "1.2.3"]
 * Will increment the build number
 * Will run a pack on the solution(s) located in the path parameter
-* Will move all .nupkg files to local nuget path
+* Will move all .nupkg files to local nuget path (think a sln with more than one package)
 * If Version is not specified than it defaults to "1.0.0" or LocalNugetVersion environment variable
 
 ## Reset-LocalNugetCounter
