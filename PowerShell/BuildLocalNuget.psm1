@@ -44,7 +44,7 @@ function Publish-LocalNuget {
             }
             return $true 
         })]
-        [string] $Path
+        [string] $Path,
         [string] $Version = $null
     )
 
@@ -54,7 +54,7 @@ function Publish-LocalNuget {
         $localNuget = (Get-Item "C:\dev\localnuget\")        
     }
 
-    if ($Version -eq $null) {
+    if ($Version -eq "") {
         if ($env:LocalNugetVersion -ne $null) {
             $Version = $env:LocalNugetVersion
         } else {
