@@ -18,15 +18,15 @@ function Get-CounterFile {
     Join-Path $env:home ".nugetcounter"
 }
 
-function Get-NextVersion {
+function Get-NextBuild {
     $counterFile = Get-CounterFile
     if (-Not (Test-Path $counterFile)) {
-        (Set-LastVersion 0) > $null
+        (Set-LastBuild 0) > $null
     }
     [int](Get-Content -Path $counterFile) + 1
 }
 
-function Set-LastVersion ($counter) {
+function Set-LastBuild ($counter) {
     $counterFile = Get-CounterFile
     if (-Not (Test-Path $counterFile)) {
         New-Item -Path $counterFile -Type File
@@ -45,6 +45,7 @@ function Publish-LocalNuget {
             return $true 
         })]
         [string] $Path
+        [string] $Version = $null
     )
 
     if ($env:LocalNugetPath -ne $null) {
@@ -53,16 +54,24 @@ function Publish-LocalNuget {
         $localNuget = (Get-Item "C:\dev\localnuget\")        
     }
 
-    $version = Get-NextVersion
+    if ($Version -eq $null) {
+        if ($env:LocalNugetVersion -ne $null) {
+            $Version = $env:LocalNugetVersion
+        } else {
+            $Version = "1.0.0" 
+        }
+    }
+
+    $build = Get-NextBuild
 
     $fullPath = (Get-Item $Path)
     $sln = Get-ChildItem -Path $fullPath -File *.sln
 
-    msbuild $sln.FullName -t:pack -p:Version="1.0.0-local.$version" -p:AssemblyVersion="1.0.0.0" -p:FileVersion="1.0.0.0"
+    msbuild $sln.FullName -t:pack -p:Version="$Version-local.$build" -p:AssemblyVersion="$Version.0" -p:FileVersion="$Version.0"
 
     Get-ChildItem -Path $fullPath -File *.nupkg -Recurse | Move-Item -Destination $localNuget -Verbose
 
-    Set-LastVersion $version
+    Set-LastBuild $build
 }
 Export-ModuleMember -function 'Publish-LocalNuget' 
 
@@ -73,6 +82,6 @@ function Reset-LocalNugetCounter {
         [string] $InitialValue = "0"
     )
 
-    Set-LastVersion $InitialValue
+    Set-LastBuild $InitialValue
 }
 Export-ModuleMember -function 'Reset-LocalNugetCounter'
