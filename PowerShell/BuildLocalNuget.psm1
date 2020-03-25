@@ -67,7 +67,7 @@ function Publish-LocalNuget {
     $fullPath = (Get-Item $Path)
     $sln = Get-ChildItem -Path $fullPath -File *.sln
 
-    msbuild $sln.FullName -t:pack -p:Version="$Version-local.$build" -p:AssemblyVersion="$Version.0" -p:FileVersion="$Version.0"
+    msbuild $sln.FullName -t:clean,restore,pack -p:Version="$Version-local.$build" -p:AssemblyVersion="$Version.0" -p:FileVersion="$Version.0"
 
     Get-ChildItem -Path $fullPath -File *.nupkg -Recurse | Move-Item -Destination $localNuget -Verbose
 
