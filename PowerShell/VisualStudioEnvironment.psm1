@@ -64,4 +64,6 @@ function VS-SetEnv2019()
         Invoke-BatchFile $VS150VCVarsBatchFile
 }
 
-Export-ModuleMember -Function 'Set-VisualStudioEnvironment'
+function MSBuild-Terse { msbuild /clp:"ErrorsOnly;WarningsOnly" $args }
+
+Export-ModuleMember -Function ('Set-VisualStudioEnvironment','MSBuild-Terse')
