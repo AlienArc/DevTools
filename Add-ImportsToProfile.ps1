@@ -41,15 +41,24 @@ function InstallToolModules {
     $scriptFolder = (Join-Path (Split-Path -parent $PSCommandPath) "PowerShell")
     $allpsm1 = Get-ChildItem -Path $scriptFolder -File *.psm1
 
+    $installPath = Join-Path (Split-Path -parent $PROFILE) "AA-DevTools"
+
+    New-Item $installPath -ItemType Directory
+
     foreach ($psm1 in $allpsm1) {
-        AddModule $psm1.FullName
+        $installedPath = Join-Path $installPath $psm1.Name
+        Copy-Item $psm1.FullName $installedPath
+        AddModule $installedPath
     }
 }
 
 EnsureElevated
 EnsureProfileExists
 
-InstallModule "PSCX"
+if ($PSVersionTable.Platform -ne "Unix")
+{
+    InstallModule "PSCX"
+}
 InstallModule "posh-git"
 
 InstallToolModules
