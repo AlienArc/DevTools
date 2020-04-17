@@ -1,4 +1,3 @@
-#$aliasExport = @()
 function addAliasForExport
 {
 	Param(
@@ -7,7 +6,6 @@ function addAliasForExport
 	)
     Set-Alias -name $name -value $command -Scope "script"	
     Export-ModuleMember -Alias $name
-	#set-variable aliasExport ($aliasExport + ($name)) -scope "script"
 }
 
 function Get-ScriptDirectory {
@@ -34,7 +32,7 @@ function Set-LastBuild ($counter) {
     Set-Content -Path $counterFile -Value $counter 
 }
 
-function Publish-LocalNuget {
+function Publish-LocalNuGet {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact='Medium')]
     Param(
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
@@ -73,9 +71,9 @@ function Publish-LocalNuget {
 
     Set-LastBuild $build
 }
-Export-ModuleMember -function 'Publish-LocalNuget' 
+Export-ModuleMember -function 'Publish-LocalNuGet' 
 
-function Reset-LocalNugetCounter {
+function Reset-LocalNuGetCounter {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact='Medium')]
     Param(
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
@@ -84,4 +82,4 @@ function Reset-LocalNugetCounter {
 
     Set-LastBuild $InitialValue
 }
-Export-ModuleMember -function 'Reset-LocalNugetCounter'
+Export-ModuleMember -function 'Reset-LocalNuGetCounter'
