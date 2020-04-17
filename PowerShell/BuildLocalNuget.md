@@ -11,7 +11,7 @@ This PowerShell module wraps up functionality to pack a solution (all packable p
     ```
 3) Download this PowerShell Module and put it somewhere useful (like your PowerShell profile folder, typically: `$home\Documents\WindowsPowerShell`)
     ```PowerShell
-    Invoke-WebRequest "https://raw.github.com/alienarc/DevTools/PowerShell/BuildLocalNuget.psm1" -OutFile "$home\Documents\WindowsPowerShell\BuildLocalNuget.psm1"
+    Invoke-WebRequest "https://raw.githubusercontent.com/AlienArc/DevTools/master/PowerShell/BuildLocalNuget.psm1" -OutFile "$home\Documents\WindowsPowerShell\BuildLocalNuget.psm1"
     ```
 4) Add the module import and configuration options to your PowerShell profile: 
     1) Open/create `profile.ps1`
@@ -41,12 +41,14 @@ This PowerShell module wraps up functionality to pack a solution (all packable p
     
 ## optional configuration:
 
-* `LocalNugetPath` By default this script will publish the NuGet packages to `c:\dev\localnuget`, if you want to use a different folder either edit the script or set the `LocalNugetPath` environment variable to the desired path if your profile:
+* `LocalNugetPath`: By default this script will publish the NuGet packages to `c:\dev\localnuget`, if you want to use a different folder either edit the script or set the `LocalNugetPath` environment variable to the desired path:
     ```PowerShell
     $env:LocalNugetPath = "<Path to localnuget folder>"
     ```
-* by default this script will use "1.0.0" for the base version, you can either pass in a version from the command or you can set `LocalNugetVersion` environment variable to the desired version:
-    * add the following to your $Profile script: `$env:LocalNugetVersion = "1.2.3"`
+* `LocalNugetVersion`: By default this script will use "1.0.0" for the base version, you can either pass in a version from the command or you can set the `LocalNugetVersion` environment variable to the desired version:
+    ```PowerShell
+    $env:LocalNugetVersion = "1.2.3"
+    ```
 
 # Usage
 
