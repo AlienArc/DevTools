@@ -1,9 +1,10 @@
-function addAliasForExport
+function ExportFunctionWithAlias
 {
-	Param(
-		[Parameter(Mandatory=$True,Position=1)] [string]$name,
-		[Parameter(Mandatory=$True,Position=2)] [string]$command
-	)
+    Param(
+        [Parameter(Mandatory=$True,Position=1)] [string] $name,
+        [Parameter(Mandatory=$True,Position=2)] [string] $command
+    )
+    Export-ModuleMember -function $command
     Set-Alias -name $name -value $command -Scope "script"	
     Export-ModuleMember -Alias $name
 }
@@ -41,5 +42,4 @@ function Reset-EntityFrameworkDatabase
     dotnet ef database update --project $ProjectPath 
 }
 
-Export-ModuleMember -Function 'Reset-EntityFrameworkDatabase'
-addAliasForExport 'EF-ResetDB' 'Reset-EntityFrameworkDatabase'
+ExportFunctionWithAlias 'EF-ResetDB' 'Reset-EntityFrameworkDatabase'

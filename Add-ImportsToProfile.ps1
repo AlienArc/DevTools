@@ -43,7 +43,7 @@ function InstallToolModules {
 
     $installPath = Join-Path (Split-Path -parent $PROFILE) "AA-DevTools"
 
-    New-Item $installPath -ItemType Directory
+    New-Item $installPath -ItemType Directory -ErrorAction SilentlyContinue
 
     foreach ($psm1 in $allpsm1) {
         $installedPath = Join-Path $installPath $psm1.Name
