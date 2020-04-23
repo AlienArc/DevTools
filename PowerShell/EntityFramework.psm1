@@ -11,8 +11,10 @@ function ExportFunctionWithAlias
 
 function Reset-EntityFrameworkDatabase
 {
-	Param([Parameter(Mandatory=$True,Position=1)] [string]$DatabaseName)
-	Param([Parameter(Mandatory=$True,Position=2)] [string]$ProjectPath)
+	Param(
+        [Parameter(Mandatory=$True,Position=1)] [string]$DatabaseName,
+        [Parameter(Mandatory=$True,Position=2)] [string]$ProjectPath
+    )
 
     $connection = New-Object System.Data.SqlClient.SqlConnection
     $connection.ConnectionString = "Server=(localdb)\MSSQLLocalDB;Database=Master;Trusted_Connection=True;"
