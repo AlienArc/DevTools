@@ -22,8 +22,9 @@ function Publish-ProjectToIIS {
         $ParamAttrib.ParameterSetName  = '__AllParameterSets'
         $AttribColl = New-Object  System.Collections.ObjectModel.Collection[System.Attribute]
         $AttribColl.Add($ParamAttrib)
-        $configurationFileNames = (Get-Content (getDefaultConfigFile $ConfigFile) | Out-String | ConvertFrom-Json).Sites | Select-Object -ExpandProperty Name
-        $AttribColl.Add((New-Object  System.Management.Automation.ValidateSetAttribute($configurationFileNames)))
+        $siteNamesList  = [SiteDetail[]](Get-Content (getDefaultConfigFile $ConfigFile) | Out-String | ConvertFrom-Json).Sites | Select-Object -ExpandProperty SiteName
+        #$configurationFileNames = (Get-Content (getDefaultConfigFile $ConfigFile) | Out-String | ConvertFrom-Json).Sites | Select-Object -ExpandProperty Name
+        $AttribColl.Add((New-Object  System.Management.Automation.ValidateSetAttribute($siteNamesList)))
         $RuntimeParam  = New-Object System.Management.Automation.RuntimeDefinedParameter('SiteName',  [string[]], $AttribColl)
         $RuntimeParamDic  = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
         $RuntimeParamDic.Add('SiteName',  $RuntimeParam)
@@ -43,7 +44,7 @@ function Publish-ProjectToIIS {
             return
         }
         
-        $Config = Get-Content $ConfigFile | ConvertFrom-Json
+        $Config = [Config](Get-Content $ConfigFile | Out-String | ConvertFrom-Json)
         
         Set-Variable -Scope Script -Name PublishFolder -Value $Config.PublishPath
         Set-Variable -Scope Script -Name DevFolder -Value $Config.SourcePath
@@ -53,13 +54,13 @@ function Publish-ProjectToIIS {
         if ($List -eq $true)
         {
             Write-Output "Available Projects"
-            $AllProjects | Format-Table -Property Name,ProfileName,PublishSubFolder,SolutionSubPath
+            $AllProjects | Format-Table #-Property Name,ProfileName,PublishSubFolder,SolutionSubPath
             return
         }
 
         $SiteName = $PSBoundParameters.SiteName
         
-        $Projects = $AllProjects | Where-Object {  $SiteName -eq $null -or $SiteName -ceq $_.Name }
+        $Projects = $AllProjects | Where-Object {  $SiteName -eq $null -or $SiteName -ceq $_.SiteName }
         
         if ($Projects -eq $null -or ($Projects -is [system.array] -and $Projects.Count -le 0))
         {
@@ -68,57 +69,59 @@ function Publish-ProjectToIIS {
         }
         
         Write-Output "Projects to Publish"
-        $Projects | Format-Table -Property Name,ProfileName,PublishSubFolder,SolutionSubPath
+        $Projects | Format-Table #-Property Name,ProfileName,PublishSubFolder,SolutionSubPath
         
         net stop W3SVC
         
-        foreach ($proj in $Projects)
+        foreach ($project in $Projects)
         {
-            if ($proj -eq $null) { break }
-            DeletePublishFolder $proj $NoDelete
-            BuildAndPublish $proj $NoPublish
-            CopyConfigs $proj $NoConfigs
+            if ($project -eq $null) { break }
+            
+            $startMessage = "---- Starting Project $($project.SiteName) ----"
+            $endMessage = "---- Completed Project $($project.SiteName) ----"
+            Write-Output ""
+            Write-Output $startMessage
+            if(!$NoDelete){ DeletePublishFolder $project }
+            if(!$NoPublish) { BuildAndPublish $project }
+            if(!$NoConfigs) { CopyConfigs $project }
+            Write-Output $endMessage
+            Write-Output ""
         }
         
         net start W3SVC
 
     }
     
-    end {
-        
+    end {        
     }
 }
 
-function DeletePublishFolder($Project, $Skip)
+function DeletePublishFolder($Project)
 {
-    if ($Skip) { return; }
-
-    $folderName = $Project.PublishSubFolder
+    $folderName = $Project.PublishFolder
     if ($folderName -eq $null -or $folderName -eq "") 
     {
         Write-Output "Attempting to Delete with no folder specified"
         return 
     }
+
+    Write-Output "Deleting $folderName folder"
     Remove-Item "$PublishFolder\$folderName" -Recurse -Force -ErrorAction Ignore
 }
 
-function BuildAndPublish($Project, $Skip)
+function BuildAndPublish($Project)
 {
-    if ($Skip) { return; }
-
-    $solutionPath = "$DevFolder\$($Project.SolutionSubPath)"
-    $publishProfile = $Project.ProfileName 
+    $solutionPath = "$DevFolder\$($Project.SolutionPath)"
+    $publishProfile = $Project.PublishProfile 
     
     Write-Output "Building $solutionPath"
     msbuild "$solutionPath" /t:"restore;clean;build" /p:DeployOnBuild=true /p:PublishProfile="$publishProfile" /clp:"ErrorsOnly"
 }
 
-function CopyConfigs($Project, $Skip)
+function CopyConfigs($Project)
 {
-    if ($Skip) { return; }
-
-    $configSource = "$PublishFolder\_Configs\$($Project.PublishSubFolder)"
-    $configDestination  = "$PublishFolder\$($Project.PublishSubFolder)"
+    $configSource = "$PublishFolder\_Configs\$($Project.PublishFolder)"
+    $configDestination  = "$PublishFolder\$($Project.PublishFolder)"
     
     if ((Test-Path $configSource) -eq $true)
     {
@@ -145,5 +148,21 @@ function getDefaultConfigFile($parameterValue)
         return $parameterValue        
     }
 }
+
+class Config
+{
+    [string]$PublishPath
+    [string]$SourcePath
+    [SiteDetail[]]$Sites
+}
+
+class SiteDetail
+{
+    [string]$SiteName
+    [string]$PublishFolder
+    [string]$SolutionPath
+    [string]$PublishProfile
+}
+
 
 Export-ModuleMember -Function "Publish-ProjectToIIS"
