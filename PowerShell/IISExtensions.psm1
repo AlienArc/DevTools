@@ -22,8 +22,7 @@ function Publish-ProjectToIIS {
         $ParamAttrib.ParameterSetName  = '__AllParameterSets'
         $AttribColl = New-Object  System.Collections.ObjectModel.Collection[System.Attribute]
         $AttribColl.Add($ParamAttrib)
-        $siteNamesList  = [SiteDetail[]](Get-Content (getDefaultConfigFile $ConfigFile) | Out-String | ConvertFrom-Json).Sites | Select-Object -ExpandProperty SiteName
-        #$configurationFileNames = (Get-Content (getDefaultConfigFile $ConfigFile) | Out-String | ConvertFrom-Json).Sites | Select-Object -ExpandProperty Name
+        $siteNamesList  = [SiteDetail[]](Get-Content (getDefaultConfigFile $ConfigFile) | Out-String | ConvertFrom-Json).Sites | Select-Object -ExpandProperty Name
         $AttribColl.Add((New-Object  System.Management.Automation.ValidateSetAttribute($siteNamesList)))
         $RuntimeParam  = New-Object System.Management.Automation.RuntimeDefinedParameter('SiteName',  [string[]], $AttribColl)
         $RuntimeParamDic  = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
@@ -54,13 +53,13 @@ function Publish-ProjectToIIS {
         if ($List -eq $true)
         {
             Write-Output "Available Projects"
-            $AllProjects | Format-Table #-Property Name,ProfileName,PublishSubFolder,SolutionSubPath
+            $AllProjects | Format-Table 
             return
         }
 
         $SiteName = $PSBoundParameters.SiteName
         
-        $Projects = $AllProjects | Where-Object {  $SiteName -eq $null -or $SiteName -ceq $_.SiteName }
+        $Projects = $AllProjects | Where-Object {  $SiteName -eq $null -or $SiteName -ceq $_.Name }
         
         if ($Projects -eq $null -or ($Projects -is [system.array] -and $Projects.Count -le 0))
         {
@@ -69,7 +68,7 @@ function Publish-ProjectToIIS {
         }
         
         Write-Output "Projects to Publish"
-        $Projects | Format-Table #-Property Name,ProfileName,PublishSubFolder,SolutionSubPath
+        $Projects | Format-Table -Property Name, PublishProfile
         
         net stop W3SVC
         
@@ -77,8 +76,8 @@ function Publish-ProjectToIIS {
         {
             if ($project -eq $null) { break }
             
-            $startMessage = "---- Starting Project $($project.SiteName) ----"
-            $endMessage = "---- Completed Project $($project.SiteName) ----"
+            $startMessage = "---- Starting Project $($project.Name) ----"
+            $endMessage = "---- Completed Project $($project.Name) ----"
             Write-Output ""
             Write-Output $startMessage
             if(!$NoDelete){ DeletePublishFolder $project }
@@ -158,7 +157,7 @@ class Config
 
 class SiteDetail
 {
-    [string]$SiteName
+    [string]$Name
     [string]$PublishFolder
     [string]$SolutionPath
     [string]$PublishProfile
