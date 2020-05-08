@@ -69,9 +69,7 @@ function Publish-ProjectToIIS {
         
         Write-Output "Projects to Publish"
         $Projects | Format-Table -Property Name, PublishProfile
-        
-        #net stop W3SVC
-        
+              
         foreach ($project in $Projects)
         {
             if ($project -eq $null) { break }
@@ -95,9 +93,6 @@ function Publish-ProjectToIIS {
             Write-Output $endMessage
             Write-Output ""
         }
-        
-        #net start W3SVC
-
     }
     
     end {        
