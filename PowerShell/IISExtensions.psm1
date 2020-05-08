@@ -183,4 +183,4 @@ class SiteDetail
 }
 
 
-Export-ModuleMember -Function "Publish-ProjectToIIS"
+Export-ModuleMember -Alias "IIS-PublishProject" -Function "Publish-ProjectToIIS"
