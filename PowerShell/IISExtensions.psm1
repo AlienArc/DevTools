@@ -22,7 +22,7 @@ function Publish-ProjectToIIS {
         $ParamAttrib.ParameterSetName  = '__AllParameterSets'
         $AttribColl = New-Object  System.Collections.ObjectModel.Collection[System.Attribute]
         $AttribColl.Add($ParamAttrib)
-        $siteNamesList  = [SiteDetail[]](Get-Content (getDefaultConfigFile $ConfigFile) | Out-String | ConvertFrom-Json).Sites | Select-Object -ExpandProperty Name
+        $siteNamesList  = GetProjectListFromConfig
         $AttribColl.Add((New-Object  System.Management.Automation.ValidateSetAttribute($siteNamesList)))
         $RuntimeParam  = New-Object System.Management.Automation.RuntimeDefinedParameter('SiteName',  [string[]], $AttribColl)
         $RuntimeParamDic  = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
@@ -37,7 +37,7 @@ function Publish-ProjectToIIS {
                 
         $ConfigFile = getDefaultConfigFile $ConfigFile
         
-        if ((Test-Path $ConfigFile -PathType Leaf -ErrorAction Ignore) -eq $false)
+        if($ConfigFile -eq $null -or $ConfigFile -eq "")
         {
             Write-Output "Config missing: '$ConfigFile'"
             return
@@ -70,7 +70,7 @@ function Publish-ProjectToIIS {
         Write-Output "Projects to Publish"
         $Projects | Format-Table -Property Name, PublishProfile
         
-        net stop W3SVC
+        #net stop W3SVC
         
         foreach ($project in $Projects)
         {
@@ -80,19 +80,40 @@ function Publish-ProjectToIIS {
             $endMessage = "---- Completed Project $($project.Name) ----"
             Write-Output ""
             Write-Output $startMessage
+            if ((Get-Website $project.Name) -eq $null)
+            {
+                Write-Host "Website not found. The name in the config may not match your site."
+                continue
+            }
+            Write-Output "Stopping website..."
+            Stop-Website $project.Name
             if(!$NoDelete){ DeletePublishFolder $project }
             if(!$NoPublish) { BuildAndPublish $project }
             if(!$NoConfigs) { CopyConfigs $project }
+            Write-Output "Restarting website..."
+            Start-Website $project.Name
             Write-Output $endMessage
             Write-Output ""
         }
         
-        net start W3SVC
+        #net start W3SVC
 
     }
     
     end {        
     }
+}
+
+function GetProjectListFromConfig()
+{
+    $configPath = getDefaultConfigFile $ConfigFile
+
+    if($configPath -eq $null -or $configPath -eq "")
+    {
+        return @("No config file found");
+    }
+    
+    return [SiteDetail[]](Get-Content ($configPath) | Out-String | ConvertFrom-Json).Sites | Select-Object -ExpandProperty Name
 }
 
 function DeletePublishFolder($Project)
@@ -143,7 +164,10 @@ function getDefaultConfigFile($parameterValue)
 
         $testPath = Join-Path $PSScriptRoot "projects.json"
         if (test-path $testPath) { return $testPath }                
+
+        $Script:IsConfigError = $true;
     } else {
+        $Script:IsConfigError = $true;
         return $parameterValue        
     }
 }
