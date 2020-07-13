@@ -47,6 +47,7 @@ function Publish-ProjectToIIS {
         
         Set-Variable -Scope Script -Name PublishFolder -Value $Config.PublishPath
         Set-Variable -Scope Script -Name DevFolder -Value $Config.SourcePath
+        Set-Variable -Scope Script -Name ProfilesFolder -Value $Config.PublishProfilesPath
         
         $AllProjects = $Config.Sites
         
@@ -127,10 +128,13 @@ function DeletePublishFolder($Project)
 function BuildAndPublish($Project)
 {
     $solutionPath = "$DevFolder\$($Project.SolutionPath)"
-    $publishProfile = $Project.PublishProfile 
+    $publishProfile = $($Project.PublishProfile)
+    $profileBuildDestination = "$($Project.PublishProfileTargetPath)\$publishProfile.pubxml"
     
     Write-Output "Building $solutionPath"
+    Copy-Item "$ProfilesFolder\$publishProfile.pubxml" $profileBuildDestination -Verbose
     msbuild "$solutionPath" /t:"restore;clean;build" /p:DeployOnBuild=true /p:PublishProfile="$publishProfile" /clp:"ErrorsOnly"
+    Remove-Item $profileBuildDestination -Verbose
 }
 
 function CopyConfigs($Project)
@@ -171,6 +175,7 @@ class Config
 {
     [string]$PublishPath
     [string]$SourcePath
+    [string]$PublishProfilesPath
     [SiteDetail[]]$Sites
 }
 
@@ -180,6 +185,7 @@ class SiteDetail
     [string]$PublishFolder
     [string]$SolutionPath
     [string]$PublishProfile
+    [string]$PublishProfileTargetPath
 }
 
 
