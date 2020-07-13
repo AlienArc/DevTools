@@ -44,7 +44,8 @@ function Publish-LocalNuGet {
             return $true 
         })]
         [string] $Path,
-        [string] $Version = $null
+        [string] $Version = $null,
+        [string] $UseNugetConfig = ""
     )
 
     if ($env:LocalNugetPath -ne $null) {
@@ -66,7 +67,13 @@ function Publish-LocalNuGet {
     $fullPath = (Get-Item $Path)
     $sln = Get-ChildItem -Path $fullPath -File *.sln
 
-    msbuild $sln.FullName -t:restore,clean,pack -p:Version="$Version-local.$build" -p:AssemblyVersion="$Version.0" -p:FileVersion="$Version.0" -p:IncludeSymbols=true
+    $extraArgs = ""
+    if ($UseNugetConfig -ne $null -and $UseNugetConfig -ne "")
+    {
+        $extraArgs = "/p:RestoreConfigFile=""$UseNugetConfig"""
+    }
+
+    msbuild $sln.FullName -t:restore,clean,pack -p:Version="$Version-local.$build" -p:AssemblyVersion="$Version.0" -p:FileVersion="$Version.0" -p:IncludeSymbols=true $extraArgs
 
     Get-ChildItem -Path $fullPath -File *.nupkg -Recurse | Move-Item -Destination $localNuget -Verbose
 

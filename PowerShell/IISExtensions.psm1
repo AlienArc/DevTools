@@ -14,7 +14,11 @@ function Publish-ProjectToIIS {
         $NoPublish,
         [Parameter(Mandatory=$False)]
         [switch]
-        $NoConfigs
+        $NoConfigs,
+        [switch]
+        $DetailedOutput,
+        [string] 
+        $UseNugetConfig = ""
     )
     DynamicParam
     {
@@ -87,7 +91,7 @@ function Publish-ProjectToIIS {
             Write-Output "Stopping website..."
             Stop-Website $project.Name
             if(!$NoDelete){ DeletePublishFolder $project }
-            if(!$NoPublish) { BuildAndPublish $project }
+            if(!$NoPublish) { BuildAndPublish $project $UseNugetConfig $DetailedOutput }
             if(!$NoConfigs) { CopyConfigs $project }
             Write-Output "Restarting website..."
             Start-Website $project.Name
@@ -125,15 +129,33 @@ function DeletePublishFolder($Project)
     Remove-Item "$PublishFolder\$folderName" -Recurse -Force -ErrorAction Ignore
 }
 
-function BuildAndPublish($Project)
+function BuildAndPublish($Project, $UseNugetConfig, $DetailedOutput)
 {
     $solutionPath = "$DevFolder\$($Project.SolutionPath)"
     $publishProfile = $($Project.PublishProfile)
     $profileBuildDestination = "$($Project.PublishProfileTargetPath)\$publishProfile.pubxml"
-    
+ 
     Write-Output "Building $solutionPath"
     Copy-Item "$ProfilesFolder\$publishProfile.pubxml" $profileBuildDestination -Verbose
-    msbuild "$solutionPath" /t:"restore;clean;build" /p:DeployOnBuild=true /p:PublishProfile="$publishProfile" /clp:"ErrorsOnly"
+
+    $args = @()
+    $args += $solutionPath
+    $args += "/t:""restore;clean;build"""
+    $args += "/p:DeployOnBuild=true"
+    $args += "/p:PublishProfile=""$publishProfile"""
+    
+    if ($DetailedOutput -ne $true)
+    {
+        $args += "/clp:""ErrorsOnly"""
+    }
+
+    if ($UseNugetConfig -ne $null -and $UseNugetConfig -ne "")
+    {
+        $args += "/p:RestoreConfigFile=""$UseNugetConfig"""
+    }
+        
+    msbuild $args
+    
     Remove-Item $profileBuildDestination -Verbose
 }
 
