@@ -9,5 +9,4 @@ function Update-AllGitRepos {
                 Set-Location ../
             }
 }
-
-Export-ModuleMember -Alias "Git-UpdateAllRepos" -Function "Update-AllGitRepos"
+Set-Alias Git-UpdateRepos Update-AllGitRepos

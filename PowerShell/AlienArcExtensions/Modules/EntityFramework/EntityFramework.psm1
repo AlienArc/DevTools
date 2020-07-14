@@ -1,14 +1,3 @@
-function ExportFunctionWithAlias
-{
-    Param(
-        [Parameter(Mandatory=$True,Position=1)] [string] $name,
-        [Parameter(Mandatory=$True,Position=2)] [string] $command
-    )
-    Export-ModuleMember -function $command
-    Set-Alias -name $name -value $command -Scope "script"	
-    Export-ModuleMember -Alias $name
-}
-
 function OpenLocalDb()
 {
     $connection = New-Object System.Data.SqlClient.SqlConnection
@@ -63,7 +52,7 @@ function Reset-EntityFrameworkDatabase
     $connection.Close()
     
 }
-ExportFunctionWithAlias 'EF-ResetDB' 'Reset-EntityFrameworkDatabase'
+Set-Alias EF-ResetDB Reset-EntityFrameworkDatabase
 
 function Update-EntityFrameworkDatabase
 {
@@ -80,4 +69,4 @@ function Update-EntityFrameworkDatabase
     $connection.Close()
 
 }
-ExportFunctionWithAlias 'EF-UpdateDB' 'Update-EntityFrameworkDatabase'
+Set-Alias EF-UpdateDB Update-EntityFrameworkDatabase

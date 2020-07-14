@@ -210,5 +210,4 @@ class SiteDetail
     [string]$PublishProfileTargetPath
 }
 
-
-Export-ModuleMember -Alias "IIS-PublishProject" -Function "Publish-ProjectToIIS"
+Set-Alias IIS-PublishProject Publish-ProjectToIIS

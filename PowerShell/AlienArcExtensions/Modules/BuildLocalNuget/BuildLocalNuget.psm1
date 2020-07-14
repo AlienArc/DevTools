@@ -1,14 +1,3 @@
-function ExportFunctionWithAlias
-{
-    Param(
-        [Parameter(Mandatory=$True,Position=1)] [string] $name,
-        [Parameter(Mandatory=$True,Position=2)] [string] $command
-    )
-    Export-ModuleMember -function $command
-    Set-Alias -name $name -value $command -Scope "script"	
-    Export-ModuleMember -Alias $name
-}
-
 function Get-ScriptDirectory {
     Split-Path -parent $PSCommandPath
 }
@@ -79,7 +68,7 @@ function Publish-LocalNuGet {
 
     Set-LastBuild $build
 }
-ExportFunctionWithAlias 'LN-Publish' 'Publish-LocalNuGet'
+Set-Alias LN-Publish Publish-LocalNuGet
 
 function Reset-LocalNuGetCounter {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact='Medium')]
@@ -90,4 +79,4 @@ function Reset-LocalNuGetCounter {
 
     Set-LastBuild $InitialValue
 }
-ExportFunctionWithAlias 'LN-Reset' 'Reset-LocalNuGetCounter'
+Set-Alias LN-Reset Reset-LocalNuGetCounter

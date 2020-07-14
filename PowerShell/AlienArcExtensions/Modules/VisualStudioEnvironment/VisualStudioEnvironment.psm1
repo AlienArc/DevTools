@@ -1,14 +1,3 @@
-function ExportFunctionWithAlias
-{
-    Param(
-        [Parameter(Mandatory=$True,Position=1)] [string] $name,
-        [Parameter(Mandatory=$True,Position=2)] [string] $command
-    )
-    Export-ModuleMember -function $command
-    Set-Alias -name $name -value $command -Scope "script"	
-    Export-ModuleMember -Alias $name
-}
-
 function Set-VisualStudioEnvironment
 {
     Param(
@@ -76,6 +65,5 @@ function VS-SetEnv2019()
 
 function Invoke-MsBuildTerse { msbuild /clp:"ErrorsOnly;WarningsOnly" $args }
 
-#Export-ModuleMember -Function ('Set-VisualStudioEnvironment','Invoke-MsBuildTerse')
-ExportFunctionWithAlias 'VS-BuildTerse' 'Invoke-MsBuildTerse'
-ExportFunctionWithAlias 'VS-LoadEnvironment' 'Set-VisualStudioEnvironment'
+Set-Alias VS-BuildTerse Invoke-MsBuildTerse
+Set-Alias VS-LoadEnvironment Set-VisualStudioEnvironment
