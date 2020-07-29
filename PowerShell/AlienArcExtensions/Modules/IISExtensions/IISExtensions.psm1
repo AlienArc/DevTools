@@ -211,3 +211,112 @@ class SiteDetail
 }
 
 Set-Alias IIS-PublishProject Publish-ProjectToIIS
+
+function Register-IISWebsites {
+    param (
+        [Parameter(
+            Mandatory=$true,
+            Position = 0,
+            HelpMessage = "Path to publish settings.")]
+        [Alias("ConfigPath")]
+        [string]
+        $publishConfig,
+
+        [Parameter(
+            Position = 1,
+            HelpMessage = "Path to publish folder.")]
+        [Alias("PublishPath")]
+        [string]
+        $publishFolder = "C:\publish",
+    
+        [Parameter(
+            Position = 2)]
+        [string]
+        $certName = "IIS Express Development Certificate"
+    )
+
+    begin {
+        $certStoreMy = "cert:\LocalMachine\My"
+        $certStoreRoot = "cert:\LocalMachine\Root"
+        Import-Module WebAdministration                
+    }
+    
+    process {
+        
+        $MyCert = (Get-ChildItem $certStoreMy | 
+            Where-Object { $_.FriendlyName -like "*$certName*" } |
+            Select-Object -First 1)
+
+        if ($MyCert -eq $null) {
+            Write-Output "Cert $certName not found!"
+            exit 1
+        }
+
+        $cert = $MyCert.Thumbprint
+
+        if ((Test-Path "$certStoreRoot\$cert") -eq $false) {
+            $rootStore = Get-Item -Path $certStoreRoot
+            $rootStore.open("ReadWrite")
+            $rootStore.add($MyCert)
+            $rootStore.close()
+        }
+
+        $WebSites = [WebSiteDetail[]](Get-Content $publishConfig | Out-String | ConvertFrom-Json)
+
+        foreach ($website in $websites) {
+            remove-WebSite -Name $website.Name -ErrorAction SilentlyContinue
+            remove-WebAppPool -name $website.Name -ErrorAction SilentlyContinue
+        }
+
+        foreach ($website in $websites) {
+            $siteName = $website.Name 
+            $sitePort = $website.Port 
+            $protocol = $website.Protocol 
+            $netTcpBinding = $website.NetTcpBinding
+            $sitePath = "$publishFolder\$siteName"
+
+            "*** Processing $siteName ***"
+
+            New-Item -ItemType directory "$sitePath" -Force -ErrorAction SilentlyContinue
+
+            New-WebAppPool -name $siteName
+
+            $newSiteParameters = @{
+                'Name'            = $siteName;
+                'PhysicalPath'    = "$sitePath";
+                'ApplicationPool' = $siteName;
+                'Port'            = $sitePort;
+            }
+
+            if ($protocol -eq "https") {
+                $newSiteParameters['ssl'] = $true
+                $newSiteParameters['SslFlags'] = 0
+            }
+
+            New-WebSite @newSiteParameters
+
+            if ($protocol -eq "https") {
+                $binding = Get-WebBinding -Name $siteName -Protocol $protocol
+                $binding.AddSslCertificate($cert, "my")
+            }
+
+            if ($netTcpBinding -ne $null -and $netTcpBinding -ne "") {
+                Set-ItemProperty "IIS:\Sites\$siteName" -name EnabledProtocols -Value "http,net.tcp"
+                New-ItemProperty -path "IIS:\Sites\$siteName" -name bindings -value @{protocol = "net.tcp"; bindingInformation = "$netTcpBinding" }
+            }
+        }
+    }
+    
+    end {
+        
+    }
+}
+
+class WebSiteDetail {
+    [string]$Name
+    [int]$Port
+    [string]$NetTcpBinding
+    [string]$Protocol = "https"
+}
+
+Set-Alias IIS-RegisterWebsites Register-IISWebsites
