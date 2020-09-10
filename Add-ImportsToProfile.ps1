@@ -39,16 +39,21 @@ function InstallModule ($moduleName)
 
 function InstallToolModules {
     $scriptFolder = (Join-Path (Split-Path -parent $PSCommandPath) "PowerShell")
-    $allpsm1 = Get-ChildItem -Path $scriptFolder -File *.psm1
+    $allModules = Get-ChildItem -Path $scriptFolder -Directory
 
-    $installPath = Join-Path (Split-Path -parent $PROFILE) "AA-DevTools"
+    $installPath = Join-Path (Split-Path -parent $PROFILE) "Modules"
 
     New-Item $installPath -ItemType Directory -ErrorAction SilentlyContinue
 
-    foreach ($psm1 in $allpsm1) {
-        $installedPath = Join-Path $installPath $psm1.Name
-        Copy-Item $psm1.FullName $installedPath
-        AddModule $installedPath
+    foreach ($module in $allModules) {
+        $moduleName = $module.Name
+        $installedPath = Join-Path $installPath $module.Name
+        if (Test-Path -Path $installedPath)
+        {
+            Remove-Item -Recurse -Force -Path $installedPath 
+        }
+        Copy-Item -Recurse $module.FullName $installedPath
+        AddModule $moduleName
     }
 }
 
