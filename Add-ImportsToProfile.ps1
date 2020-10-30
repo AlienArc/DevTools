@@ -50,9 +50,9 @@ function InstallToolModules {
         $installedPath = Join-Path $installPath $module.Name
         if (Test-Path -Path $installedPath)
         {
-            Remove-Item -Recurse -Force -Path $installedPath 
+            Remove-Item -Recurse -Force -ErrorAction SilentlyContinue -Path $installedPath
         }
-        Copy-Item -Recurse $module.FullName $installedPath
+        Copy-Item -Recurse -Force $module.FullName $installedPath
         AddModule $moduleName
     }
 }

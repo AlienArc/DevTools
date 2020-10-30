@@ -65,5 +65,11 @@ function VS-SetEnv2019()
 
 function Invoke-MsBuildTerse { msbuild /clp:"ErrorsOnly;WarningsOnly" $args }
 
+function Remove-VisualStudioBuildArtifacts()
+{
+	Get-ChildItem -Include obj,bin -Recurse | Remove-Item -Recurse -Force
+}
+
 Set-Alias VS-BuildTerse Invoke-MsBuildTerse
 Set-Alias VS-LoadEnvironment Set-VisualStudioEnvironment
+Set-Alias VS-RemoveBuildArtifacts Remove-VisualStudioBuildArtifacts

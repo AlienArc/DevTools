@@ -67,3 +67,27 @@ function Update-GitRepos {
 }
 
 Set-Alias Git-UpdateRepos Update-GitRepos
+
+function Set-GitCommitDate 
+{
+	Param(
+		[Parameter(Mandatory=$True,Position=1)] $date
+	)
+
+	$formatedDate = [System.DateTimeOffset]::Parse($date).ToString("o")
+	Write-Output "GIT Author/Comitter date environment variables set to '$formatedDate'."
+	
+	Set-Item ENV:GIT_AUTHOR_DATE "$formatedDate"
+	Set-Item ENV:GIT_COMMITTER_DATE "$formatedDate"
+}
+
+Set-Alias Git-SetCommitDate Set-GitCommitDate
+
+function Clear-GitCommitDate 
+{
+	Remove-Item ENV:GIT_AUTHOR_DATE
+	Remove-Item ENV:GIT_COMMITTER_DATE
+	Write-Output "GIT Author/Comitter date environment variables cleared."
+}
+
+Set-Alias Git-ClearCommitDate Clear-GitCommitDate
