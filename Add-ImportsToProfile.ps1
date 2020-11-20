@@ -65,5 +65,6 @@ if ($PSVersionTable.Platform -ne "Unix")
     InstallModule "PSCX"
 }
 InstallModule "posh-git"
+InstallModule "PoshRSJob"
 
 InstallToolModules

@@ -18,45 +18,66 @@ function Update-GitRepos {
             set-location $Path
         }
 
-        Get-ChildItem -Recurse -Depth 2 -Force | 
-            Where-Object { $_.Mode -match "h" -and $_.FullName -like "*\.git" } |
-                ForEach-Object {
+        $Jobs = (Get-ChildItem -Recurse -Depth 2 -Force | 
+            Where-Object { $_.Mode -match "h" -and $_.FullName -like "*\.git" -and ($filter -eq $null -or ($filter -contains (Get-Item "$($_.FullName)/..").Name)) } |
+                    Start-RSJob -Name {"$_"} -ScriptBlock {
+                        Param ($gitPath) 
+                        
+                        Set-Location "$($gitPath.FullName)/.."
+                        $repo = (Get-Item .).Name
+                        $curBranch = git branch --show-current
+
+                        $repoLine = "$repo [$curBranch] - "
+
+                        if ($curBranch -ne "develop" -and $curBranch -ne "master")
+                        {
+                            Write-Output ($repoLine + "skipping, not on develop or master branch") # -ForegroundColor "Red" -BackgroundColor "Black"
+                            return
+                        }
+                        
+                        Write-Output ($repoLine + "Fetching") #-ForegroundColor "Yellow"
                     
-                    if ($filter -ne $null -and (($filter -contains (Get-Item "$($_.FullName)/..").Name) -eq $false)) 
-                    {
-                        return
-                    }
+                        #Write-Host "Updating" $repo [$curBranch]
 
-                    Set-Location "$($_.FullName)/.."
-                    $repo = (Get-Item .).Name
-                    $curBranch = git branch --show-current
+                        #Write-Host "$repo - Updating remotes & pruning branches"
+                        git remote update --prune
 
-                    Write-Host "$repo [$curBranch] - " -NoNewline -ForegroundColor "White"
-
-                    if ($curBranch -ne "develop" -and $curBranch -ne "master")
-                    {
-                        Write-Host "skipping, not on develop or master branch" -ForegroundColor "Red" -BackgroundColor "Black"
-                        return
-                    }
+                        $localRev  = (git rev-parse HEAD)
+                        $remoteRev = (git rev-parse "@{u}")
+                        if ($localRev -eq $remoteRev)
+                        {
+                            Write-Output "Allready up to date" #-ForegroundColor "Green"
+                        }
+                        else
+                        {
+                            Write-Output "Pulling latest" #-ForegroundColor "Yellow"
+                            git pull
+                            #Write-Host "- Pulled latest" -ForegroundColor "Yellow"
+                        }
+                    })                    
                 
-                    #Write-Host "Updating" $repo [$curBranch]
+                $CompletedJobs = @()
 
-                    #Write-Host "$repo - Updating remotes & pruning branches"
-                    git remote update --prune
+                while ($Jobs.State -contains "Running" -or $Jobs.State -contains "NotStarted"){ 
+                            
+                    $CompletedJobs = ($Jobs | Where-Object -Property State -eq "Completed")
 
-                    $localRev  = (git rev-parse HEAD)
-                    $remoteRev = (git rev-parse "@{u}")
-                    if ($localRev -eq $remoteRev)
-                    {
-                        Write-Host "Allready up to date" -ForegroundColor "Green"
+                    if ($CompletedJobs.count -ne 0) {
+                        Write-Host "." -ForegroundColor Yellow; 
+                        $Jobs = $Jobs | Where-Object { $CompletedJobs -notcontains $_ }
+                        $CompletedJobs | Receive-RsJob
+                        $CompletedJobs | Remove-RsJob
                     }
-                    else
-                    {
-                        Write-Host "Pulling latest" -ForegroundColor "Yellow"
-                        git pull
-                        #Write-Host "- Pulled latest" -ForegroundColor "Yellow"
-                    }
+                    Write-Host "." -NoNewline -ForegroundColor Yellow; 
+                    Start-Sleep -Milliseconds 100 
                 }
+
+                if ($Jobs.count -ne 0) {
+                    Write-Host "." -ForegroundColor Yellow; 
+                }
+
+                $Jobs | Wait-RSJob | Receive-RsJob
+                $Jobs | Remove-RsJob
 
     }
     

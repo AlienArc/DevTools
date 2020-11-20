@@ -168,6 +168,11 @@ function CopyConfigs($Project)
     {
         Write-Output "Publishing config files: $configSource"
         Get-ChildItem -Path "$configSource" | Copy-Item -Destination "$configDestination" -Recurse -Verbose -ErrorAction Ignore
+        
+        # $xslt = New-Object System.Xml.Xsl.XslCompiledTransform
+        # $xslt.Load("MyTransform.xsl")
+        # $xslt.Transform("MyXMLFile.xml","MyOutput.WhatEver")
+
     }
 }
 
