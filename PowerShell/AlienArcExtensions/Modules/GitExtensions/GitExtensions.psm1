@@ -112,3 +112,49 @@ function Clear-GitCommitDate
 }
 
 Set-Alias Git-ClearCommitDate Clear-GitCommitDate
+
+function Get-GitRepos 
+{
+    param (
+        [Parameter(Mandatory=$False)]
+        [string]
+        $Path
+    )
+    
+    begin {
+        Push-Location
+    }
+    
+    process {
+        if ($Path -ne $null -and $Path -ne "")
+        {
+            set-location $Path
+        }
+
+        Get-ChildItem -Recurse -Depth 2 -Force | 
+            Where-Object { $_.Mode -match "h" -and $_.FullName -like "*\.git" } |
+                    ForEach-Object {                        
+                        $gitPath = $_
+                        
+                        Set-Location "$($gitPath.FullName)/.."
+                        $location = Get-Location
+
+                        $repo = (Get-Item .).Name
+                        $curBranch = git branch --show-current
+
+                        $gitRepo = New-Object PSObject
+                        $gitRepo | Add-Member NoteProperty Name $repo
+                        $gitRepo | Add-Member NoteProperty Branch $curBranch
+                        $gitRepo | Add-Member NoteProperty Path $($location.Path)
+
+                        $gitRepo
+                    }
+
+    }
+    
+    end {        
+        Pop-Location
+    }
+}
+
+Set-Alias Git-GetRepos Get-GitRepos
