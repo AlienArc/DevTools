@@ -80,3 +80,15 @@ function Reset-LocalNuGetCounter {
     Set-LastBuild $InitialValue
 }
 Set-Alias LN-Reset Reset-LocalNuGetCounter
+
+function Clear-LocalNuGet {
+
+    if ($env:LocalNugetPath -ne $null) {
+        $localNuget = (Get-Item $env:LocalNugetPath)
+    } else {
+        $localNuget = (Get-Item "C:\dev\localnuget\")        
+    }
+
+    Get-ChildItem -Path $localNuget | Remove-Item
+}
+Set-Alias LN-Clear Clear-LocalNuGet
