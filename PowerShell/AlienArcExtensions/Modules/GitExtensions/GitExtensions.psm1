@@ -118,7 +118,13 @@ function Get-GitRepos
     param (
         [Parameter(Mandatory=$False)]
         [string]
-        $Path
+        $Path,
+        [Parameter(Mandatory=$False)]
+        [string[]]
+        $IncludeBranch,
+        [Parameter(Mandatory=$False)]
+        [string[]]
+        $ExcludeBranch
     )
     
     begin {
@@ -140,26 +146,31 @@ function Get-GitRepos
                         $location = Get-Location
 
                         $repo = (Get-Item .).Name
+
+                        Write-Progress -Activity "Getting Git Repo Details" -Status "$repo"
+
                         $curBranch = git branch --show-current
 
-                        $gitRepo = New-Object PSObject
-                        $gitRepo | Add-Member NoteProperty Name $repo
-                        $gitRepo | Add-Member NoteProperty Branch $curBranch
-                        $gitRepo | Add-Member NoteProperty Path $($location.Path)
+                        $process = $true;
 
-                        # $gitRepo | Add-Member NoteProperty Branches (New-object System.Collections.Arraylist)
+                        if ($IncludeBranch.Count -gt 0 -and -not ($IncludeBranch -contains $curBranch))
+                        {
+                            $process = $false;
+                        }
 
-                        # $allBranches = (git for-each-ref --format='%(refname:short)' refs/heads/**).Split()
-                        # foreach ($branchName in $allBranches) {
-                        #     git rev-parse --abbrev-ref "$branchName@{upstream}"
-                        #     $branchInfo = [PSCustomObject]@{
-                        #         branch = $branchName;
-                        #         remote = $branchRemote;
-                        #     }
-                        #     $gitRepo.Branches.add($branchInfo)
-                        # }
+                        if ($ExcludeBranch.Count -gt 0 -and $ExcludeBranch -contains $curBranch)
+                        {
+                            $process = $false;
+                        }
 
-                        $gitRepo
+                        if ($process)
+                        {
+                            $gitRepo = New-Object PSObject
+                            $gitRepo | Add-Member NoteProperty Name $repo
+                            $gitRepo | Add-Member NoteProperty Branch $curBranch
+                            $gitRepo | Add-Member NoteProperty Path $($location.Path)
+                            $gitRepo
+                        }
                     }
 
     }
