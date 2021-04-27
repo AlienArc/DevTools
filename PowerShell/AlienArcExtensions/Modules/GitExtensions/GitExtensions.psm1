@@ -147,6 +147,18 @@ function Get-GitRepos
                         $gitRepo | Add-Member NoteProperty Branch $curBranch
                         $gitRepo | Add-Member NoteProperty Path $($location.Path)
 
+                        # $gitRepo | Add-Member NoteProperty Branches (New-object System.Collections.Arraylist)
+
+                        # $allBranches = (git for-each-ref --format='%(refname:short)' refs/heads/**).Split()
+                        # foreach ($branchName in $allBranches) {
+                        #     git rev-parse --abbrev-ref "$branchName@{upstream}"
+                        #     $branchInfo = [PSCustomObject]@{
+                        #         branch = $branchName;
+                        #         remote = $branchRemote;
+                        #     }
+                        #     $gitRepo.Branches.add($branchInfo)
+                        # }
+
                         $gitRepo
                     }
 
@@ -230,7 +242,10 @@ function Reset-GitLocalBranch()
         if ($matchBranch -ne $null)
         {
             git checkout $Branch
-            git branch | Where-Object {$_ | Select-String -NotMatch " $Branch$" } | foreach-object { git branch -D $_.Trim() }
+            if ($LastExitCode -eq 0) 
+            {
+                git branch --list | Where-Object {$_ | Select-String -NotMatch " $Branch$" } | foreach-object { git branch -D $_.Trim() }
+            }
             git pull
         }
         else {

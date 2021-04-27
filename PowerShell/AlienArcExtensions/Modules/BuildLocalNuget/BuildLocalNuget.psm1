@@ -22,6 +22,15 @@ function Set-LastBuild ($counter) {
     Set-Content -Path $counterFile -Value $counter 
 }
 
+function Get-LocalNugetPath {    
+    if ($env:LocalNugetPath -ne $null) {
+        $localNugetPath = (Get-Item $env:LocalNugetPath)
+    } else {
+        $localNugetPath = (Get-Item "C:\dev\localnuget\")
+    }
+    [string]$localNugetPath
+}
+
 function Publish-LocalNuGet {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact='Medium')]
     Param(
@@ -37,11 +46,7 @@ function Publish-LocalNuGet {
         [string] $UseNugetConfig = ""
     )
 
-    if ($env:LocalNugetPath -ne $null) {
-        $localNuget = (Get-Item $env:LocalNugetPath)
-    } else {
-        $localNuget = (Get-Item "C:\dev\localnuget\")        
-    }
+    $localNuget = Get-LocalNugetPath
 
     if ($Version -eq "") {
         if ($env:LocalNugetVersion -ne $null) {
@@ -56,17 +61,25 @@ function Publish-LocalNuGet {
     $fullPath = (Get-Item $Path)
     $sln = Get-ChildItem -Path $fullPath -File *.sln
 
+    if ($sln -eq $null -or $sln -eq "")
+    {
+        Write-Output "No SLN file found."
+        return
+    }
+
     $extraArgs = ""
     if ($UseNugetConfig -ne $null -and $UseNugetConfig -ne "")
     {
         $extraArgs = "/p:RestoreConfigFile=""$UseNugetConfig"""
     }
 
-    msbuild $sln.FullName -t:restore,clean,pack -p:Version="$Version-local.$build" -p:AssemblyVersion="$Version.0" -p:FileVersion="$Version.0" -p:IncludeSymbols=true $extraArgs
-
-    Get-ChildItem -Path $fullPath -File *.nupkg -Recurse | Move-Item -Destination $localNuget -Verbose
-
-    Set-LastBuild $build
+    msbuild $sln.FullName -t:"clean,pack" -restore -p:Version="$Version-local.$build" -p:AssemblyVersion="$Version.0" -p:FileVersion="$Version.0" -p:IncludeSymbols=true $extraArgs
+    
+    if ($LastExitCode -eq 0)
+    {
+        Get-ChildItem -Path $fullPath -File *.nupkg -Recurse | Move-Item -Destination $localNuget -Verbose
+        Set-LastBuild $build
+    }
 }
 Set-Alias LN-Publish Publish-LocalNuGet
 
@@ -78,17 +91,25 @@ function Reset-LocalNuGetCounter {
     )
 
     Set-LastBuild $InitialValue
+
+    Write-Output "Local NuGet build counter set to $InitialValue"
 }
 Set-Alias LN-Reset Reset-LocalNuGetCounter
 
 function Clear-LocalNuGet {
 
-    if ($env:LocalNugetPath -ne $null) {
-        $localNuget = (Get-Item $env:LocalNugetPath)
-    } else {
-        $localNuget = (Get-Item "C:\dev\localnuget\")        
-    }
+    $localNuget = Get-LocalNugetPath
 
     Get-ChildItem -Path $localNuget | Remove-Item
+
+    $nugetCache = (join-path $env:HOME ".nuget/packages")
+
+    $localCachedPackages = (Get-ChildItem -Path "$nugetCache\*\*-local.*" -Directory)
+    Get-Item -Path $localCachedPackages | Remove-Item -Recurse -Force 
+
+    Reset-LocalNuGetCounter
+
 }
+
 Set-Alias LN-Clear Clear-LocalNuGet
+
