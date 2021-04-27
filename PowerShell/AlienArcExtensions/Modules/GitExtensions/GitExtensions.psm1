@@ -176,20 +176,13 @@ function Reset-GitLocalBranches()
     
     process {
 
-        if ($Path -ne $null -and $Path -ne "")
-        {
-            set-location $Path
-        }
-
         if ($Branch -eq $null -or $Branch -eq "")
         {
             $Branch = "develop"
         }
 
-        git fetch
-        git checkout $Branch
-        git branch | Where-Object {$_ | Select-String -NotMatch " $Branch$" } | foreach-object { git branch -D $_.Trim() }
-        git pull
+        $repos = Get-GitRepos | Where-Object {$_.Branch -ne $Branch} 
+        $repos | ForEach-Object { Reset-GitLocalBranch -Path $_.Path -Branch $Branch }
 
     }
     
@@ -200,3 +193,56 @@ function Reset-GitLocalBranches()
 }
 
 Set-Alias Git-ResetLocalBranches Reset-GitLocalBranches
+
+function Reset-GitLocalBranch()
+{
+    param (
+        [Parameter(Mandatory=$False)]
+        [string[]]
+        $Branch,
+        [Parameter(Mandatory=$False)]
+        [string]
+        $Path
+    )
+
+    begin {
+        Push-Location
+    }
+    
+    process {
+
+        if ($Path -ne $null -and $Path -ne "")
+        {
+            set-location $Path
+        }
+
+        if ($Branch -eq $null -or $Branch -eq "")
+        {
+            $Branch = "develop"
+        }
+
+        $repo = [System.IO.Path]::GetFileName($(Get-Location))
+
+        $matchBranch = git branch --list $Branch
+
+        git fetch
+
+        if ($matchBranch -ne $null)
+        {
+            git checkout $Branch
+            git branch | Where-Object {$_ | Select-String -NotMatch " $Branch$" } | foreach-object { git branch -D $_.Trim() }
+            git pull
+        }
+        else {
+            Write-Output "$repo does not have a local branch named $Branch."
+        }
+
+    }
+    
+    end {        
+        Pop-Location
+    }
+
+}
+
+Set-Alias Git-ResetLocalBranch Reset-GitLocalBranch
