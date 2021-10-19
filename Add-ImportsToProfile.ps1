@@ -50,10 +50,31 @@ function InstallToolModules {
         $installedPath = Join-Path $installPath $module.Name
         if (Test-Path -Path $installedPath)
         {
-            Remove-Item -Recurse -Force -ErrorAction SilentlyContinue -Path $installedPath
+            Remove-FolderAndChildren $installedPath
+            # Remove-Item -Recurse -Force -ErrorAction SilentlyContinue -Path $installedPath
         }
         Copy-Item -Recurse -Force $module.FullName $installedPath
         AddModule $moduleName
+    }
+}
+
+#this function provides a workaround for deleting when your powershell module folder is in onedrive and you are using file on demand
+function Remove-FolderAndChildren ($folderPath) {
+    if (Test-Path -Path $folderPath)
+    {
+        $Items = Get-ChildItem -Path $folderPath -Recurse -File
+        foreach ($Item in $Items) {
+            $Item.Delete()
+        }
+
+        $Items = (Get-ChildItem -Path $folderPath -Recurse -Directory)
+        [array]::Reverse($Items)
+        foreach ($Item in $Items) {
+            $Item.Delete($true)
+        }
+
+        $Items = Get-Item -Path $folderPath
+        $Items.Delete($true)
     }
 }
 
