@@ -105,7 +105,10 @@ function Clear-LocalNuGet {
     $nugetCache = (join-path $env:HOME ".nuget/packages")
 
     $localCachedPackages = (Get-ChildItem -Path "$nugetCache\*\*-local.*" -Directory)
-    Get-Item -Path $localCachedPackages | Remove-Item -Recurse -Force 
+    if ($null -ne $localCachedPackages)
+    {
+        Get-Item -Path $localCachedPackages | Remove-Item -Recurse -Force
+    }
 
     Reset-LocalNuGetCounter
 
