@@ -1,11 +1,11 @@
 function Set-VisualStudioEnvironment
 {
     Param(
-        [ValidateSet(2008,2010,2012,2013,2015,2017,2019)] 
+        [ValidateSet(2008,2010,2012,2013,2015,2017,2019,2022)] 
         [int] $Version 
     )
     
-    if ($Version -eq 0) { $Version = 2019 }
+    if ($Version -eq 0) { $Version = 2022 }
 
     if ($Version -eq 2008) { VS-SetEnv2008 }
     if ($Version -eq 2010) { VS-SetEnv2010 }
@@ -14,6 +14,7 @@ function Set-VisualStudioEnvironment
     if ($Version -eq 2015) { VS-SetEnv2015 }
     if ($Version -eq 2017) { VS-SetEnv2017 }
     if ($Version -eq 2019) { VS-SetEnv2019 }
+    if ($Version -eq 2022) { VS-SetEnv2022 }
 }
 
 function VS-SetEnv2008()
@@ -60,6 +61,12 @@ function VS-SetEnv2017()
 function VS-SetEnv2019()
 {
     $VS150VCVarsBatchFile = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat"
+    Invoke-BatchFile $VS150VCVarsBatchFile
+}
+
+function VS-SetEnv2022()
+{
+    $VS150VCVarsBatchFile = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsMSBuildCmd.bat"
     Invoke-BatchFile $VS150VCVarsBatchFile
 }
 
